@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 type Node struct {
 	lNode     *Node // The left child node
@@ -79,20 +82,44 @@ func getNodeArray(ft map[byte]int) []Node {
 	return nArray
 }
 
-func trav(n *Node, prevCodes []byte) {
+func trav(n *Node, code int16, codeLen int16) {
 	if n.lNode == nil && n.rNode == nil {
-		fmt.Printf("%v -> %d\n", prevCodes, n.symbol)
+		fmt.Printf("%s -> %c\n", codeToString(code, codeLen), n.symbol)
 	} else {
-		trav(n.lNode, append(prevCodes, 0))
-		trav(n.rNode, append(prevCodes, 1))
+		trav(n.lNode, ((code << 1) | 1), codeLen+1)
+		trav(n.rNode, ((code << 1) | 0), codeLen+1)
 	}
 }
 
+func codeToString(code int16, codeLen int16) string {
+	var str string
+	str = fmt.Sprintf("%b", code)
+	diff := int(codeLen) - len(str)
+	for a := 0; a < diff; a++ {
+		str = "0" + str
+	}
+	return str
+}
+
 func main() {
+	// read bytes from a file
+	if len(os.Args) < 2 {
+		os.Exit(1)
+	}
+
+	filename := os.Args[1]
+	f, err := os.Open(filename)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	bArray := make([]byte, 100)
+	f.Read(bArray)
+	f.Close()
 	// In the JPEG encoding just use the frequency tables for the dc symbols and the ac symbols
-	bArray := []byte{0, 1, 2}
+	//bArray := []byte{0, 1, 2}
 	ft := getFrequencyTable(bArray)
-	fmt.Printf("%v\n", ft)
+	//fmt.Printf("%v\n", ft)
 	nArray := getNodeArray(ft)
 	// sort the array
 	sort(&nArray)
@@ -103,5 +130,5 @@ func main() {
 		//		fmt.Printf("%v\n", res)
 		nArray = res
 	}
-	trav(&nArray[0], []byte{})
+	trav(&nArray[0], 0, 0)
 }
